@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>My Assessment</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+  </head>
+  <body>
+    <div class="container">
+        <form id="address-form">
+            <div class="form-group">
+              <label for="name">Address</label>
+              <input type="text" class="form-control" id="address" name="address" required>
+            </div>
+            <div class="form-group">
+              <label for="city">City</label>
+              <input type="text" class="form-control" id="city" name="city" required>
+            </div>
+            <div class="form-group">
+              <label for="state">State</label>
+              <input type="text" class="form-control" id="state" name="state" required>
+            </div>
+            <div class="form-group">
+              <label for="zip">Zip Code</label>
+              <input type="text" class="form-control" id="zip" name="zip" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+          </form>
+    </div>
+    
+    <!-- Modal -->
+<div class="modal fade" id="addressModal" tabindex="-1" role="dialog" aria-labelledby="addressModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addressModalLabel">Please choose the address you want to use:</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="address-form-choice">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="address" id="original-address" value="original" checked>
+            <label class="form-check-label" for="original-address">Original Address: <span id="originalAddress"></span></label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="address" id="standardized-address" value="standardized">
+            <label class="form-check-label" for="standardized-address">Standardized Address: <span id="standardizedAddress"></span></label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="submit" class="btn btn-primary" onclick="saveAddress();">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
+    <script>
+        // Use XHR to submit the form data to a PHP script
+        var form = document.getElementById("address-form");
+        form.addEventListener("submit", function(event) {
+          event.preventDefault();
+          let user_id = "458ISOFT7325";
+          let address = document.getElementById("address").value;
+          let city = document.getElementById("city").value;
+          let state = document.getElementById("state").value;
+          let zip = document.getElementById("zip").value;
+
+          var xml = "<AddressValidateRequest USERID='" + user_id + "'><Address ID='0'><Address1></Address1><Address2>" + address + "</Address2><City>" + city + "</City><State>DC</State><Zip5>" + zip + "</Zip5><Zip4></Zip4></Address></AddressValidateRequest>";
+          var url = "https://secure.shippingapis.com/ShippingAPI.dll?API=Verify&XML=" + encodeURI(xml);
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", url, true);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    var response = xhr.responseXML;
+                    var xml = response;
+                    if (xml.getElementsByTagName("Error")[0]) {
+                        alert("Invalid address: " + xml.getElementsByTagName("Description")[0].innerHTML);
+                    } else {
+                        var originalAddress = document.getElementById("originalAddress");
+                        var standardizedAddress = document.getElementById("standardizedAddress");
+                        originalAddress.innerHTML = address + ", " + city + ", " + state + " - " + zip;
+                        standardizedAddress.innerHTML = xml.getElementsByTagName("Address2")[0].innerHTML + ", " + 
+                        xml.getElementsByTagName("City")[0].innerHTML + ", " + 
+                        xml.getElementsByTagName("State")[0].innerHTML + " " + 
+                        xml.getElementsByTagName("Zip5")[0].innerHTML;
+                        $('#addressModal').modal('show');
+                    }
+                }
+            };
+            xhr.send();
+          });
+        function saveAddress() {
+          var address = document.querySelector('input[name="address"]:checked').value;
+          if (address === 'original') {
+            var form = document.getElementById("address-form");
+             var xhr = new XMLHttpRequest();
+            xhr.open("POST", "index.php", true);
+            $('#addressModal').modal('hide');
+            xhr.onreadystatechange = function() {
+              if (xhr.readyState === 4 && xhr.status === 200) {
+                console.log(xhr.responseText);
+              }
+            };
+            xhr.send(new FormData(form));
+            
+            // saveAddressToDb('original',$_POST['address'],$_POST['city'],$_POST['state'],$_POST['zip']);
+          } else {
+            let user_id = "458ISOFT7325";
+            let address = document.getElementById("address").value;
+            let city = document.getElementById("city").value;
+            let state = document.getElementById("state").value;
+            let zip = document.getElementById("zip").value;
+            var xml = "<AddressValidateRequest USERID='" + user_id + "'><Address ID='0'><Address1></Address1><Address2>" + address + "</Address2><City>" + city + "</City><State>DC</State><Zip5>" + zip + "</Zip5><Zip4></Zip4></Address></AddressValidateRequest>";
+          var url = "https://secure.shippingapis.com/ShippingAPI.dll?API=Verify&XML=" + encodeURI(xml);
+          var xhr = new XMLHttpRequest();
+            xhr.open("GET", url, true);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                  var response = xhr.responseXML;
+                var xml = response;
+                if (xml.getElementsByTagName("Error")[0]) {
+                  alert("Invalid address: " + xml.getElementsByTagName("Description")[0].innerHTML);
+                } else {
+                    let address_new =  xml.getElementsByTagName("Address2")[0].innerHTML ;
+                    let city_new =  xml.getElementsByTagName("City")[0].innerHTML ;
+                    let state_new =  xml.getElementsByTagName("State")[0].innerHTML ;
+                    let zip_new =  xml.getElementsByTagName("Zip5")[0].innerHTML;
+                      $('#addressModal').modal('hide');
+                      const formData = new FormData();
+                      formData.append('address', address_new);
+                      formData.append('city', city_new);
+                      formData.append('state', state_new);
+                      formData.append('zip', zip_new);
+                      let xhr = new XMLHttpRequest();
+                        xhr.open("POST", "index.php", true);
+              
+                        xhr.onreadystatechange = function() {
+                          if (xhr.readyState === 4 && xhr.status === 200) {
+                                console.log(xhr.responseText);
+                            }
+                      };
+                      xhr.send(formData);
+                  }
+                }
+            };
+            xhr.send();
+            }
+        }
+      </script>
+</body>
+</html>
+
+
+
+
+  
+ 
