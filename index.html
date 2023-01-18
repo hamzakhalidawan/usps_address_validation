@@ -5,7 +5,9 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
   </head>
   <body>
-    <div class="container">
+    <div class="container p-5">
+      <h4>Address Validator</h4>
+      <p>Validate/Standardize addresses using USPS</p>
         <form id="address-form">
             <div class="form-group">
               <label for="name">Address</label>
@@ -17,41 +19,97 @@
             </div>
             <div class="form-group">
               <label for="state">State</label>
-              <input type="text" class="form-control" id="state" name="state" required>
+              <select name="state" id="state" class="form-control">
+                <option value="" selected="selected">Select a State</option>
+                <option value="AL">Alabama</option>
+                <option value="AK">Alaska</option>
+                <option value="AZ">Arizona</option>
+                <option value="AR">Arkansas</option>
+                <option value="CA">California</option>
+                <option value="CO">Colorado</option>
+                <option value="CT">Connecticut</option>
+                <option value="DE">Delaware</option>
+                <option value="DC">District Of Columbia</option>
+                <option value="FL">Florida</option>
+                <option value="GA">Georgia</option>
+                <option value="HI">Hawaii</option>
+                <option value="ID">Idaho</option>
+                <option value="IL">Illinois</option>
+                <option value="IN">Indiana</option>
+                <option value="IA">Iowa</option>
+                <option value="KS">Kansas</option>
+                <option value="KY">Kentucky</option>
+                <option value="LA">Louisiana</option>
+                <option value="ME">Maine</option>
+                <option value="MD">Maryland</option>
+                <option value="MA">Massachusetts</option>
+                <option value="MI">Michigan</option>
+                <option value="MN">Minnesota</option>
+                <option value="MS">Mississippi</option>
+                <option value="MO">Missouri</option>
+                <option value="MT">Montana</option>
+                <option value="NE">Nebraska</option>
+                <option value="NV">Nevada</option>
+                <option value="NH">New Hampshire</option>
+                <option value="NJ">New Jersey</option>
+                <option value="NM">New Mexico</option>
+                <option value="NY">New York</option>
+                <option value="NC">North Carolina</option>
+                <option value="ND">North Dakota</option>
+                <option value="OH">Ohio</option>
+                <option value="OK">Oklahoma</option>
+                <option value="OR">Oregon</option>
+                <option value="PA">Pennsylvania</option>
+                <option value="RI">Rhode Island</option>
+                <option value="SC">South Carolina</option>
+                <option value="SD">South Dakota</option>
+                <option value="TN">Tennessee</option>
+                <option value="TX">Texas</option>
+                <option value="UT">Utah</option>
+                <option value="VT">Vermont</option>
+                <option value="VA">Virginia</option>
+                <option value="WA">Washington</option>
+                <option value="WV">West Virginia</option>
+                <option value="WI">Wisconsin</option>
+                <option value="WY">Wyoming</option>
+              </select>
             </div>
             <div class="form-group">
               <label for="zip">Zip Code</label>
               <input type="text" class="form-control" id="zip" name="zip" required>
             </div>
-            <button type="submit" class="btn btn-primary">Submit</button>
+            <button type="submit" class="btn btn-primary">Validate</button>
           </form>
     </div>
     
-    <!-- Modal -->
 <div class="modal fade" id="addressModal" tabindex="-1" role="dialog" aria-labelledby="addressModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="addressModalLabel">Please choose the address you want to use:</h5>
+        <h5 class="modal-title" id="addressModalLabel">Save Address</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
       <div class="modal-body">
-        <form id="address-form-choice">
-          <div class="form-check">
-            <input class="form-check-input" type="radio" name="address" id="original-address" value="original" checked>
-            <label class="form-check-label" for="original-address">Original Address: <span id="originalAddress"></span></label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="radio" name="address" id="standardized-address" value="standardized">
-            <label class="form-check-label" for="standardized-address">Standardized Address: <span id="standardizedAddress"></span></label>
-          </div>
-        </form>
+        <p>Which address format do you want to save?</p>
+        <button type="button" id="originalAddress" class="btn btn-primary">ORIGINAL</button>
+        <button type="button" id="standardizedAddress" class="btn btn-primary">STANDARDIZED (USPS)</button>
+      </br>
+      <div class="mt-3"></div>
+        <textarea type="text" style="height: 200px; width: 100%; padding: 10px;" id="address_input", disabled >
+        </textarea>
+
+        <div class="alert alert-success" id="success-message" role="alert" style="display: none;">
+          Address Saved Successfully!
+        </div>
+        <div class="alert alert-danger" id="error-message" role="alert" style="display: none;">
+          There's some issue! Please try again
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        <button type="submit" class="btn btn-primary" onclick="saveAddress();">Save</button>
+        <button type="submit" class="btn btn-primary" id="save-address-btn" onclick="saveAddress();">Save</button>
       </div>
     </div>
   </div>
@@ -63,6 +121,9 @@
     <script>
         // Use XHR to submit the form data to a PHP script
         var form = document.getElementById("address-form");
+        var address_type = "";
+        var original = '';
+        var standardized = '';
         form.addEventListener("submit", function(event) {
           event.preventDefault();
           let user_id = "458ISOFT7325";
@@ -82,13 +143,11 @@
                     if (xml.getElementsByTagName("Error")[0]) {
                         alert("Invalid address: " + xml.getElementsByTagName("Description")[0].innerHTML);
                     } else {
-                        var originalAddress = document.getElementById("originalAddress");
-                        var standardizedAddress = document.getElementById("standardizedAddress");
-                        originalAddress.innerHTML = address + ", " + city + ", " + state + " - " + zip;
-                        standardizedAddress.innerHTML = xml.getElementsByTagName("Address2")[0].innerHTML + ", " + 
-                        xml.getElementsByTagName("City")[0].innerHTML + ", " + 
-                        xml.getElementsByTagName("State")[0].innerHTML + " " + 
-                        xml.getElementsByTagName("Zip5")[0].innerHTML;
+                        var input_field = document.getElementById('address_input');
+                        address_type = 'original'
+                        input_field.value = "Address line 1:"+ address+"\n" + "City:" + city +"\n" +"State:" + state+ "\n" + "Zip:" + zip;
+                        original = "Address line 1:"+ address+"\n" + "City:" + city +"\n" +"State:" + state+ "\n" + "Zip:" + zip;
+                        standardized = "Address line 1:"+ xml.getElementsByTagName("Address2")[0].innerHTML+"\n" + "City:" + xml.getElementsByTagName("City")[0].innerHTML +"\n" +"State:" + xml.getElementsByTagName("State")[0].innerHTML+ "\n" + "Zip:" + xml.getElementsByTagName("Zip5")[0].innerHTML;
                         $('#addressModal').modal('show');
                     }
                 }
@@ -96,15 +155,16 @@
             xhr.send();
           });
         function saveAddress() {
-          var address = document.querySelector('input[name="address"]:checked').value;
-          if (address === 'original') {
+          var input_field = document.getElementById('address_input');
+          var address = input_field.value;
+          if (address_type === 'original') {
             var form = document.getElementById("address-form");
              var xhr = new XMLHttpRequest();
             xhr.open("POST", "index.php", true);
-            $('#addressModal').modal('hide');
             xhr.onreadystatechange = function() {
               if (xhr.readyState === 4 && xhr.status === 200) {
                 console.log(xhr.responseText);
+                document.getElementById("success-message").style.display = "block";
               }
             };
             xhr.send(new FormData(form));
@@ -131,7 +191,6 @@
                     let city_new =  xml.getElementsByTagName("City")[0].innerHTML ;
                     let state_new =  xml.getElementsByTagName("State")[0].innerHTML ;
                     let zip_new =  xml.getElementsByTagName("Zip5")[0].innerHTML;
-                      $('#addressModal').modal('hide');
                       const formData = new FormData();
                       formData.append('address', address_new);
                       formData.append('city', city_new);
@@ -143,6 +202,8 @@
                         xhr.onreadystatechange = function() {
                           if (xhr.readyState === 4 && xhr.status === 200) {
                                 console.log(xhr.responseText);
+                                document.getElementById("success-message").style.display = "block";
+                                document.getElementById("success-message")
                             }
                       };
                       xhr.send(formData);
@@ -152,6 +213,16 @@
             xhr.send();
             }
         }
+          document.getElementById('originalAddress').onclick = function() {
+            var input_field = document.getElementById('address_input');
+            input_field.value = original;
+            address_type = 'original';
+          };
+          document.getElementById('standardizedAddress').onclick = function() {
+            var input_field = document.getElementById('address_input');
+            input_field.value = standardized ;
+            address_type = 'standardized';
+          };
       </script>
 </body>
 </html>
